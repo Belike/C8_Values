@@ -1,0 +1,133 @@
+# Chart values for the Camunda Platform 8 Helm chart.
+# This file deliberately contains only the values that differ from the defaults.
+# For changes and documentation, use your favorite diff tool to compare it with:
+# https://github.com/camunda/camunda-platform-helm/blob/main/charts/camunda-platform/values.yaml
+
+# This is a very small cluster useful for running locally and for development
+
+global:
+  identity:
+    auth:
+      # Disable the Identity authentication
+      # it will fall back to basic-auth: demo/demo as default user
+      enabled: false
+  elasticsearch:
+    enabled: false
+  opensearch:
+    enabled: true
+    auth:
+      username: "camunda"
+      password: "Z$G*X&vE2mFZ9t"
+    url:
+      protocol: https
+      host: search-normanstestsearch-rdveqp47dpxujw7rrwsiuxz4s4.eu-central-1.es.amazonaws.com
+      port: 443
+
+identity:
+  enabled: false
+
+identityKeycloak:
+  enabled: false
+
+optimize:
+  image:
+    tag: 3.13.3-rc1
+  enabled: false
+  migration:
+    enabled: false
+  env:
+    - name: AWS_REGION
+      value: "eu-central-1"
+    - name: AWS_ACCESS_KEY_ID
+      value: "AKIAZRGESTN7VSNCQYJE"
+    - name: AWS_SECRET_ACCESS_KEY
+      value: "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"
+    - name: CAMUNDA_OPTIMIZE_OPENSEARCH_SETTINGS_INDEX_NUMBER_OF_SHARDS
+      value: "1"
+    - name: CAMUNDA_OPTIMIZE_OPENSEARCH_SETTINGS_INDEX_NUMBER_OF_REPLICAS
+      value: "2"
+
+connectors:
+  enabled: false
+
+operate:
+  enabled: true
+  env:
+    - name: AWS_REGION
+      value: "eu-central-1"
+    - name: AWS_ACCESS_KEY_ID
+      value: "AKIAZRGESTN7VSNCQYJE"
+    - name: AWS_SECRET_ACCESS_KEY
+      value: "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"
+    - name: CAMUNDA_OPERATE_OPENSEARCH_NUMBEROFSHARDS
+      value: "1"
+    - name: CAMUNDA_OPERATE_OPENSEARCH_NUMBEROFREPLICAS
+      value: "2"
+    #- name: CAMUNDA_OPERATE_OPENSEARCH_INDEXPREFIX
+    #  value: "operate-test"
+    #- name: CAMUNDA_OPERATE_ZEEBE_OPENSEARCH_PREFIX
+    #  value: "zeebe-test"
+
+tasklist:
+  enabled: false
+  env:
+    - name: CAMUNDA_TASKLIST_OPENSEARCH_NUMBEROFSHARDS
+      value: "1"
+    - name: CAMUNDA_TASKLIST_OPENSEARCH_NUMBEROFREPLICAS
+      value: "2"
+    - name: CAMUNDA_TASKLIST_ZEEBEOPENSEARCH_PREFIX
+      value: "zeebe-test"
+    - name: AWS_REGION
+      value: "eu-central-1"
+    - name: AWS_ACCESS_KEY_ID
+      value: "AKIAZRGESTN7VSNCQYJE"
+    - name: AWS_SECRET_ACCESS_KEY
+      value: "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"
+    - name: CAMUNDA_TASKLIST_OPENSEARCH_PREFIX
+      value: "tasklist-test"
+    - name: CAMUNDA_TASKLIST_OPENSEARCH_INDEXPREFIX
+      value: "tasklist-test"
+zeebe:
+  clusterSize: 3
+  partitionCount: 3
+  replicationFactor: 3
+  pvcSize: 10Gi
+  affinity:
+    podAntiAffinity: null
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "512M"
+    limits:
+      cpu: "512m"
+      memory: "2Gi"
+  env:
+    - name: AWS_REGION
+      value: "eu-central-1"
+    - name: AWS_ACCESS_KEY_ID
+      value: "AKIAZRGESTN7VSNCQYJE"
+    - name: AWS_SECRET_ACCESS_KEY
+      value: "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"
+    - name: ZEEBE_BROKER_EXPORTERS_OPENSEARCH_ARGS_INDEX_NUMBEROFSHARDS
+      value: "1"
+    - name: ZEEBE_BROKER_EXPORTERS_OPENSEARCH_ARGS_INDEX_NUMBEROFREPLICAS
+      value: "2"
+    #- name: ZEEBE_BROKER_EXPORTERS_OPENSEARCH_ARGS_INDEX_PREFIX
+    #  value: "zeebe-test"
+
+
+zeebe-gateway:
+  replicas: 1
+
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "512M"
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
+
+  logLevel: ERROR
+
+elasticsearch:
+  enabled: false
