@@ -1,8 +1,0 @@
-apiVersion: v1
-kind: Secret
-metadata:
-  name: registry-camunda-cloud
-  namespace: camunda
-data:
-  .dockerconfigjson: ewogICJhdXRocyI6IHsKICAgICJyZWdpc3RyeS5jYW11bmRhLmNsb3VkIjogewogICAgICAidXNlcm5hbWUiOiAiTm9ybWFuLkx1ZXJpbmciLAogICAgICAicGFzc3dvcmQiOiAicXdQR0taNjQ0JEd0ZEAiLAogICAgICAiZW1haWwiOiAibm9ybWFuLmx1ZXJpbmdAY2FtdW5kYS5jb20iLAogICAgICAiYXV0aCI6ICJUbTl5YldGdUxreDFaWEpwYm1jNmNYZFFSMHRhTmpRMEpFZDBaRUE9IgogICAgfQogIH0KfQo=
-type: kubernetes.io/dockerconfigjson
