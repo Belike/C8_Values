@@ -1,3 +1,9 @@
+google/normunda/customerConfigurations/*
+google/normunda/customerConfigurations/**
+aws/OpenSearch/Terraform-Setup/.terraform/**
+aws/OpenSearch/Terraform-Setup/.terraform/*
+
+
 # OSX leaves these everywhere on SMB shares
 ._*
 
