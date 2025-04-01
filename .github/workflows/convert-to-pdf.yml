@@ -1,0 +1,27 @@
+name: Convert Markdown to PDF
+
+on:
+  push:
+    branches:
+      - main  # or the branch you are using
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Pandoc
+        run: sudo apt-get install -y pandoc
+
+      - name: Convert Markdown to PDF
+        run: pandoc google/normunda/HA-WebApps/README.md -o google/normunda/HA-WebApps/pdf/instructions.pdf
+
+      - name: Commit PDF file
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git add google/normunda/HA-WebApps/pdf/instructions.pdf
+          git commit -m 'Automatically converted markdown to PDF'
+          git push
