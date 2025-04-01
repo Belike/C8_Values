@@ -110,6 +110,7 @@ Here is one way of scaling Operate:
 
     kubectl get deployment $release-operate -n $namespace -o yaml > operate_template.yaml
 
+
 2. Clean-Up deployment:
 
 
