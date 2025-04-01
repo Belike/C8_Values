@@ -3,7 +3,7 @@ name: Convert Markdown to PDF and Push Changes
 on:
   push:
     branches:
-      - main  # or the branch you are using
+      - main  # Runs the workflow when pushing to the main branch
 
 jobs:
   convert_and_push:
@@ -26,13 +26,13 @@ jobs:
         run: |
           pandoc google/normunda/HA-WebApps/README.md -o google/normunda/HA-WebApps/pdf/instructions.pdf
 
-      # Step 4: Commit the PDF file and push to GitHub
+      # Step 4: Commit and Push PDF file using GITHUB_TOKEN
       - name: Commit and Push PDF file
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
           git add google/normunda/HA-WebApps/pdf/instructions.pdf
-          git commit -m 'Automatically converted Markdown to PDF'
-          git push https://$TOKEN@github.com/Belike/C8_Values.git HEAD:main
+          git commit -m 'Automatically converted Markdown to PDF' || echo "No changes to commit"
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/Belike/C8_Values.git HEAD:main
         env:
-          TOKEN: ${{ secrets.TOKEN }}  # GitHub Token secret for authentication
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
