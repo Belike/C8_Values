@@ -57,10 +57,9 @@ Keycloak can be scaled out-of-the-box and within the helm chart:
 Identity can only be scaled after the Realm creation of Keycloak has been successfully completed.
 Thus, it has to be guaranteed that Keycloak is up and running.
 
-Idea: Scale Identity once healthy by pinging the health endpoint
+Idea: Scale Identity once healthy by checking deployment status
 
-    kubectl port-forward svc/camunda-identity 8082:8082 -n $namespace
-    http://localhost:8082/actuator/health
+     kubectl rollout status deployment/$release-identity -n $namespace --watch --timeout=900s
 
 Afterward, simply scale the deployment by executing:
 
@@ -98,6 +97,7 @@ identity:
 ```
 
 ### Operate
+![Operate & Tasklist](img/operate-tasklist.png)
 Operate has limited scalability support, because the importer and archiver of Operate cannot be scaled independently.
 Hint: Importers can be scaled per partition, but with only one importer per partition maximum.
 
@@ -188,6 +188,7 @@ yq eval '.spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIg
 .spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].topologyKey = "kubernetes.io/hostname"' -i tasklist_template.yaml
 ```
 ### Optimize
+![Optimize](img/optimize.png)
 Similar to Operate and Tasklist, Optimize cannot be scaled on the importer level.
 
 1. Retrieve ConfigMap of Optimize
