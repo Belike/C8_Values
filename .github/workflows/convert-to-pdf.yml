@@ -16,7 +16,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y pandoc
-          sudo apt-get install -y texlive-latex-base texlive-xcolor
+          sudo apt-get install -y texlive-latex-base texlive-latex-extra
 
       - name: Convert Markdown to PDF
         run: pandoc google/normunda/HA-WebApps/README.md -o google/normunda/HA-WebApps/pdf/instructions.pdf
