@@ -1,0 +1,190 @@
+# Chart values for the Camunda Platform 8 Helm chart.
+# This file deliberately contains only the values that differ from the defaults.
+# For changes and documentation, use your favorite diff tool to compare it with:
+# https://github.com/camunda/camunda-platform-helm/blob/main/charts/camunda-platform/values.yaml
+# See options: https://github.com/camunda/camunda-platform-helm/blob/main/charts/camunda-platform/README.md
+
+global:
+  # TODO: Specify as described here: https://docs.camunda.io/docs/self-managed/setup/install/#configure-license-key
+  license:
+    existingSecret: "camunda-license"
+    existingSecretKey: "key"
+  ingress:
+    enabled: true
+    className: nginx
+    # TODO: Adjust Hostname
+    host: "normunda.de"
+    # TODO: Configure TLS-Secret or autogenerate via Cert-Manager
+    tls:
+      enabled: true
+      secretName: "tls-secret"
+    annotations:
+      # TODO: CERT Manager with cluster-issuer or delete
+      cert-manager.io/cluster-issuer: "letsencrypt-prod"
+      ingress.kubernetes.io/rewrite-target: "/"
+      nginx.ingress.kubernetes.io/ssl-redirect: "false"
+      nginx.ingress.kubernetes.io/proxy-buffering: null
+  identity:
+    auth:
+      # TODO: Align with hostname
+      publicIssuerUrl: "https://normunda.de/auth/realms/camunda-platform"
+      issuerBackendUrl: "https://normunda.de/auth/realms/camunda-platform"
+      operate:
+        existingSecret:
+          name: static-secret
+        # TODO: Align with hostname
+        redirectUrl: "https://normunda.de/operate"
+      tasklist:
+        existingSecret:
+          name: static-secret
+        # TODO: Align with hostname
+        redirectUrl: "https://normunda.de/tasklist"
+      optimize:
+        existingSecret:
+          name: static-secret
+        # TODO: Align with hostname
+        redirectUrl: "https://normunda.de/optimize"
+      zeebe:
+        existingSecret:
+          name: static-secret
+      webModeler:
+        existingSecret:
+          name: static-secret
+        # TODO: Align with hostname
+        redirectUrl: "https://normunda.de/modeler"
+      connectors:
+        existingSecret:
+          name: static-secret
+        # TODO: Align with hostname
+        redirectUrl: "https://normunda.de/connectors"
+
+# TODO: Configure Console if wanted!
+console:
+  enabled: false
+
+zeebe:
+  enabled: true
+  # TODO: Increase sizes for Prod!
+  # Setting partitionCount to 9 to have more room for throughput is recommended (state version 8.6)
+  clusterSize: 3
+  partitionCount: 9
+  replicationFactor: 3
+  # TODO: Adjust to business needs
+  retention:
+    enabled: true
+    minimumAge: 7d
+  # TODO: Adjust to SSD Class
+  pvcStorageClassName: "ssd"
+
+zeebeGateway:
+  replicas: 2
+  # TODO: Adjust for gRPC Ingress Configuration and REST Configuration
+  ingress:
+    grpc:
+      enabled: true
+      className: nginx
+      host: "normunda.de"
+      tls:
+        enabled: true
+        secretName: "tls-secret"
+      annotations:
+        cert-manager.io/cluster-issuer: "letsencrypt-prod"
+        ingress.kubernetes.io/rewrite-target: "/"
+        nginx.ingress.kubernetes.io/ssl-redirect: "false"
+        nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
+        nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
+    rest:
+      enabled: false
+      path: "/zeebe"
+      host: "normunda.de"
+      tls:
+        enabled: true
+        secretName: "tls-secret"
+  contextPath: "/zeebe"
+
+operate:
+  contextPath: "/operate"
+  # TODO: Adjust to business needs
+  retention:
+    enabled: true
+    minimumAge: 30d
+
+tasklist:
+  contextPath: "/tasklist"
+  # TODO: Adjust to business needs
+  retention:
+    enabled: true
+    minimumAge: 30d
+
+optimize:
+  enabled: true
+  # TODO: Needs to be adjusted to Zeebe partitionCount
+  partitionCount: "9"
+  contextPath: "/optimize"
+  env:
+    - name: OPTIMIZE_JAVA_OPTS
+      value: "-Xmx2048m"
+      # Runs every 5 minute in example
+    - name: CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_CRON_TRIGGER
+      value: "*/5 * * * *"
+      # TODO: Adjust to business needs
+    - name: CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_TTL
+      value: "P180D"
+      # Will clean up all processes
+    - name: CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_PROCESS_DATA_CLEANUP_CLEANUP_MODE
+      value: "all"
+    - name: CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_PROCESS_DATA_CLEANUP_ENABLED
+      value: "true"
+    - name: CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_DECISION_DATA_CLEANUP_ENABLED
+      value: "true"
+    - name: CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_INGESTED_EVENT_CLEANUP_ENABLED
+      value: "true"
+
+connectors:
+  enabled: true
+  contextPath: "/connectors"
+
+identity:
+  contextPath: "/identity"
+  # TODO: Align with hostname
+  fullURL: "https://normunda.de/identity"
+
+identityKeycloak:
+  postgresql:
+    auth:
+      existingSecret: static-secret
+  auth:
+    existingSecret: static-secret
+
+webModeler:
+  enabled: true
+  contextPath: "/modeler"
+  restapi:
+    mail:
+      # TODO: Configure if Web-Modeler should be able to send out invitations
+      smtpHost: ""
+      smtpPort: 587
+      smtpUser: ""
+      # smtpPassword will only be set if existincSecret is not specified
+      # smtpPassword:
+      existingSecret: static-secret
+      # Email address to be displayed as sender of emails from Web Modeler
+      fromAddress: "demo-mail"
+      fromName: "Camunda 8"
+# Database for Web-Modeler
+postgresql:
+  enabled: true
+  auth:
+    existingSecret: static-secret
+
+elasticsearch:
+  master:
+    # TODO: Can be adjusted for lower environments
+    replicaCount: 3
+    # TODO: Maybe worth checking to change? Check here: https://artifacthub.io/packages/helm/bitnami/elasticsearch?modal=values&path=master.persistence.storageClass
+    persistence:
+      storageClass: ""
+
+# TODO: Configure Monitoring with Prometheus
+prometheusServiceMonitor:
+  enabled: false

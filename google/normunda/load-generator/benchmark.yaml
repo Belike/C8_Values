@@ -1,0 +1,56 @@
+# config for https://github.com/camunda-community-hub/camunda-8-benchmark
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: benchmark
+  labels:
+    app: benchmark
+spec:
+  selector:
+    matchLabels:
+      app: benchmark
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: benchmark
+    spec:
+      containers:
+        - name: benchmark
+          image: camundacommunityhub/camunda-8-benchmark:main
+          imagePullPolicy: Always
+          env:
+            - name: JAVA_OPTIONS
+              value: >-
+                -Dzeebe.client.broker.gateway-address=camunda-zeebe-gateway:26500
+                -Dzeebe.client.security.plaintext=true
+                -Dzeebe.client.request-timeout=600s
+                -Dzeebe.client.job.poll-interval=1ms
+                -Dzeebe.client.default-job-worker-stream-enabled=true
+                -Dbenchmark.startPiPerSecond=50
+                -Dbenchmark.startPiIncreaseFactor=0.01
+                -Dbenchmark.startRateAdjustmentStrategy=none
+                -Dbenchmark.fixedBackOffDelay=0
+                -Dbenchmark.maxBackpressurePercentage=1.0
+                -Dbenchmark.taskCompletionDelay=0
+                -Dbenchmark.bpmnProcessId=benchmark
+                -Dbenchmark.payloadPath=file:/config/typical_payload.json
+                -Dbenchmark.autoDeployProcess=true
+                -Dbenchmark.warmupPhaseDurationMillis=60000
+          #              -Dzeebe.client.worker.max-jobs-active=${jobWorker.maxJobsActive}
+          #              -Dzeebe.client.worker.threads=${jobWorker.numberOfThreads}
+          resources:
+            limits:
+              cpu: 3
+              memory: 1Gi
+            requests:
+              cpu: 1
+              memory: 1Gi
+          volumeMounts:
+            - name: payload
+              mountPath: /config
+              readOnly: true
+      volumes:
+        - name: payload
+          configMap:
+            name: payload

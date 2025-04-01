@@ -15,9 +15,10 @@ global:
     enabled: false
   opensearch:
     enabled: true
+    # Utilizing Basic Auth or IRSA?
     auth:
-      username: "camunda"
-      password: "Z$G*X&vE2mFZ9t"
+      username: <USERNAME>
+      password: <PASSWORD>
     url:
       protocol: https
       host: search-normanstestsearch-rdveqp47dpxujw7rrwsiuxz4s4.eu-central-1.es.amazonaws.com
@@ -29,27 +30,10 @@ identity:
 identityKeycloak:
   enabled: false
 
+#
 optimize:
-  image:
-    tag: 3.13.4-rc1
-  enabled: true
-  migration:
-    enabled: false
-  env:
-    #- name: AWS_REGION
-    #  value: "eu-central-1"
-    #- name: AWS_ACCESS_KEY_ID
-    #  value: "AKIAZRGESTN7VSNCQYJE"
-    #- name: AWS_SECRET_ACCESS_KEY
-    #  value: "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"
-    - name: CAMUNDA_OPTIMIZE_OPENSEARCH_SETTINGS_INDEX_NUMBER_OF_SHARDS
-      value: "1"
-    - name: CAMUNDA_OPTIMIZE_OPENSEARCH_SETTINGS_INDEX_NUMBER_OF_REPLICAS
-      value: "2"
-    - name: CAMUNDA_OPTIMIZE_ZEEBE_NAME
-      value: "zeebe-dev"
-    - name: CAMUNDA_OPTIMIZE_OPENSEARCH_SETTINGS_INDEX_PREFIX
-      value: "optimize-dev"
+ enabled: false
+
 connectors:
   enabled: false
 
@@ -70,10 +54,6 @@ operate:
       value: "operate-dev"
     - name: CAMUNDA_OPERATE_ZEEBE_OPENSEARCH_PREFIX
       value: "zeebe-dev"
-    - name: CAMUNDA_OPERATE_USERID
-      value: "norman"
-    - name: CAMUNDA_OPERATE_PASSWORD
-      value: "norman"
 
 tasklist:
   enabled: true
@@ -92,6 +72,7 @@ tasklist:
       value: "zeebe-dev"
     - name: CAMUNDA_TASKLIST_OPENSEARCH_INDEXPREFIX
       value: "tasklist-dev"
+    # Necessary due to a minor bug in current version
     - name: camunda.tasklist.database
       value: opensearch
 zeebe:

@@ -31,46 +31,84 @@ global:
         existingSecret:
           name: static-secret
         redirectUrl: "https://normunda.de/optimize"
+      connectors:
+        existingSecret:
+          name: static-secret
+        redirectUrl: "https://normunda.de/connectors"
       zeebe:
         existingSecret:
           name: static-secret
 
 operate:
+  enabled: true
   contextPath: "/operate"
+  resources:
+    limits:
+      cpu: 2
+      memory: 2Gi
+    requests:
+      cpu: 2
+      memory: 2Gi
+  retention:
+    enabled: true
+    minimumAge: 30d
+  env:
+    - name: CAMUNDA_OPERATE_ELASTICSEARCH_NUMBEROFREPLICAS
+      value: "3" # resilient ES
+    - name: CAMUNDA_OPERATE_ELASTICSEARCH_NUMBEROFSHARDS
+      value: "3" # performant ES
 
 tasklist:
+  enabled: true
   contextPath: "/tasklist"
+  resources:
+    limits:
+      cpu: 2
+      memory: 2Gi
+    requests:
+      cpu: 2
+      memory: 2Gi
+  retention:
+    enabled: true
+    minimumAge: 30d
+  env:
+    - name: CAMUNDA_TASKLIST_ELASTICSEARCH_NUMBEROFREPLICAS
+      value: "3" # resilient ES
+    - name: CAMUNDA_TASKLIST_ELASTICSEARCH_NUMBEROFSHARDS
+      value: "3" # performant ES
 
 optimize:
-  enabled: true
-  contextPath: "/optimize"
-  env:
-    - name: OPTIMIZE_JAVA_OPTS
-      value: "-Xmx2048m"
-    - name: CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_CRON_TRIGGER
-      value: "*/5 * * * *"
-    - name: CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_TTL
-      value: "P0D"
-    - name: CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_PROCESS_DATA_CLEANUP_CLEANUP_MODE
-      value: "all"
-    - name: CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_PROCESS_DATA_CLEANUP_ENABLED
-      value: "true"
-    - name: CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_DECISION_DATA_CLEANUP_ENABLED
-      value: "true"
-    - name: CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_INGESTED_EVENT_CLEANUP_ENABLED
-      value: "true"
-    - name: CAMUNDA_OPTIMIZE_ZEEBE_INCLUDE_OBJECT_VARIABLE
-      value: "false"
-
+  enabled: false
 
 connectors:
+  enabled: true
+  replicas: 3
+  contextPath: "/connectors"
+  resources:
+    limits:
+      cpu: 2
+      memory: 4Gi
+    requests:
+      cpu: 2
+      memory: 4Gi
+
+console:
   enabled: false
 
 identity:
   contextPath: "/identity"
   fullURL: "https://normunda.de/identity"
+  resources:
+    limits:
+      cpu: 2
+      memory: 2Gi
+    requests:
+      cpu: 1
+      memory: 1Gi
 
 identityKeycloak:
+  enabled: true
+  replicaCount: 3
   auth:
     adminPassword: EasySecret
     managementPassword: EasySecret
@@ -79,11 +117,19 @@ identityKeycloak:
       value: "true"
     - name: KEYCLOAK_FRONTEND_URL
       value: "https://normunda.de/auth"
+  resources:
+    limits:
+      cpu: 2
+      memory: 1Gi
+    requests:
+      cpu: 2
+      memory: 1Gi
+
+identityPostgresql:
+  enabled: true
 
 zeebeGateway:
-  env:
-    - name: ZEEBE_GATEWAY_SECURITY_AUTHENTICATION_MODE
-      value: "none"
+  replicas: 3
   ingress:
     grpc:
       enabled: true
@@ -100,32 +146,55 @@ zeebeGateway:
         nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
     rest:
       enabled: false
-  replicas: 1
   resources:
     requests:
       memory: "512Mi"
-      cpu: "250m"
-    limits:
-      memory: "2048Mi"
-      cpu: "1000m"
+      cpu: 1
+    limits: null
+  env:
+    - name: ZEEBE_GATEWAY_MONITORING_ENABLED
+      value: "true" # monitoring
+    - name: ZEEBE_GATEWAY_THREADS_GRPCMAXTHREADS
+      value: "50" # multi-tenancy performance
+    - name: ZEEBE_GATEWAY_SECURITY_AUTHENTICATION_MODE
+      value: "none"
 
 zeebe:
-  clusterSize: 1
-  partitionCount: 1
-  replicationFactor: 1
-  pvcSize: 10Gi
-
+  clusterSize: "12"
+  partitionCount: "12"
+  replicationFactor: "3"
+  pvcSize: 20Gi
   resources:
     requests:
-      cpu: "100m"
-      memory: "512M"
+      cpu: 1
+      memory: 5Gi
     limits:
-      cpu: "512m"
-      memory: "2Gi"
+      cpu: null
+      memory: 64Gi
+  retention:
+    enabled: true
+    minimumAge: 7d
+  env:
+    - name: ZEEBE_BROKER_EXECUTION_METRICS_EXPORTER_ENABLED
+      value: "true"
+    - name: ZEEBE_BROKER_EXPORTERS_ELASTICSEARCH_ARGS_INDEX_NUMBEROFREPLICAS
+      value: "3" # resilient ES
+    - name: ZEEBE_BROKER_EXPORTERS_ELASTICSEARCH_ARGS_INDEX_NUMBEROFSHARDS
+      value: "3" # performant ES
 
 elasticsearch:
+  enabled: true
   master:
+    masterOnly: FALSE
+    heapSize: 4092m
     replicaCount: 1
+    resources:
+      limits:
+        cpu: 8
+        memory: 64Gi
+      requests:
+        cpu: 4
+        memory: 8Gi
   global:
     kibanaEnabled: true
   kibana:
@@ -148,19 +217,5 @@ elasticsearch:
     readinessProbe:
       enabled: false
 
-  #initScripts:
-    #init-keystore.sh: |
-    #  #!/bin/bash
-    #  set -e#
-
-#      echo "Adding S3 access keys to Elasticsearch keystore..."
-
-      # Add S3 client default keys to the keystore
- #     echo "$S3_SECRET_KEY" | elasticsearch-keystore add -f -x s3.client.default.secret_key
-  #    echo "$S3_ACCESS_KEY" | elasticsearch-keystore add -f -x s3.client.default.access_key
-
-  extraEnvVars:
-    - name: S3_SECRET_KEY
-      value: minioadmin
-    - name: S3_ACCESS_KEY
-      value: minioadmin
+prometheusServiceMonitor:
+  enabled: true

@@ -1,0 +1,143 @@
+apiVersion: apps/v1
+kind: Deployment
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 2
+  revisionHistoryLimit: 10
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: camunda-platform
+        app.kubernetes.io/component: optimize
+        app.kubernetes.io/instance: camunda
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: camunda-platform
+        app.kubernetes.io/part-of: camunda-platform
+        app.kubernetes.io/version: 8.6.6
+        helm.sh/chart: camunda-platform-11.2.2
+        webapp: optimize-webapp
+    spec:
+      containers:
+        - env:
+            - name: CAMUNDA_LICENSE_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: key
+                  name: camunda-license
+            - name: CAMUNDA_OPTIMIZE_CONTEXT_PATH
+              value: /optimize
+            - name: OPTIMIZE_ELASTICSEARCH_HOST
+              value: camunda-elasticsearch
+            - name: OPTIMIZE_ELASTICSEARCH_HTTP_PORT
+              value: "9200"
+            - name: SPRING_PROFILES_ACTIVE
+              value: ccsm
+            - name: CAMUNDA_IDENTITY_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  key: optimize-secret
+                  name: static-secret
+            - name: CAMUNDA_OPTIMIZE_MULTITENANCY_ENABLED
+              value: "true"
+            - name: CAMUNDA_OPTIMIZE_CACHES_CLOUD_TENANT_AUTHORIZATIONS_MAX_SIZE
+              value: "10000"
+            - name: CAMUNDA_OPTIMIZE_CACHES_CLOUD_TENANT_AUTHORIZATIONS_MIN_FETCH_INTERVAL_SECONDS
+              value: "600000"
+            - name: OPTIMIZE_JAVA_OPTS
+              value: -Xmx2048m
+            - name: CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_CRON_TRIGGER
+              value: '*/5 * * * *'
+            - name: CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_TTL
+              value: P7D
+            - name: CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_PROCESS_DATA_CLEANUP_CLEANUP_MODE
+              value: all
+            - name: CAMUNDA_OPTIMIZE_ZEEBE_INCLUDE_OBJECT_VARIABLE
+              value: "false"
+            - name: MULTITENANCY_ENABLED
+              value: "true"
+            - name: CAMUNDA_OPTIMIZE_ZEEBE_ENABLED
+              value: "false"
+            - name: CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_PROCESS_DATA_CLEANUP_ENABLED
+              value: "false"
+            - name: CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_DECISION_DATA_CLEANUP_ENABLED
+              value: "false"
+            - name: CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_INGESTED_EVENT_CLEANUP_ENABLED
+              value: "false"
+          envFrom:
+            - configMapRef:
+                name: camunda-camunda-platform-identity-env-vars
+          image: camunda/optimize:8.6.6
+          imagePullPolicy: IfNotPresent
+          name: optimize
+          ports:
+            - containerPort: 8090
+              name: http
+              protocol: TCP
+            - containerPort: 8092
+              name: management
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 5
+            httpGet:
+              path: /optimize/api/readyz
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            limits:
+              cpu: "2"
+              memory: 2Gi
+            requests:
+              cpu: 600m
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /tmp
+              name: tmp
+            - mountPath: /camunda
+              name: camunda
+            - mountPath: /optimize/config/environment-config.yaml
+              name: environment-config
+              subPath: environment-config.yaml
+            - mountPath: /optimize/config/application-ccsm.yaml
+              name: environment-config
+              subPath: application-ccsm.yaml
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        fsGroup: 1001
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccount: camunda-optimize
+      serviceAccountName: camunda-optimize
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - emptyDir: {}
+          name: tmp
+        - emptyDir: {}
+          name: camunda
+        - configMap:
+            defaultMode: 492
+            name: optimize-webapps-config
+          name: environment-config
+  selector:
+    matchLabels:
+      webapp: optimize-webapp
+metadata:
+  name: optimize-webapp

@@ -16,9 +16,11 @@ global:
       cert-manager.io/cluster-issuer: "letsencrypt-prod"
       ingress.kubernetes.io/rewrite-target: "/"
       nginx.ingress.kubernetes.io/ssl-redirect: "false"
+      nginx.ingress.kubernetes.io/proxy-buffering: null
   identity:
     auth:
       publicIssuerUrl: "https://normunda.de/auth/realms/camunda-platform"
+      issuerBackendUrl: "https://normunda.de/auth/realms/camunda-platform"
       operate:
         existingSecret:
           name: static-secret
@@ -34,6 +36,10 @@ global:
       zeebe:
         existingSecret:
           name: static-secret
+      webModeler:
+        existingSecret:
+          name: static-secret
+        redirectUrl: "https://normunda.de/modeler"
 
 operate:
   contextPath: "/operate"
@@ -47,10 +53,13 @@ optimize:
   env:
     - name: OPTIMIZE_JAVA_OPTS
       value: "-Xmx2048m"
+      # Runs every 5 minute in example
     - name: CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_CRON_TRIGGER
       value: "*/5 * * * *"
+      # Period of time zero days -> will clean up data immediately
     - name: CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_TTL
       value: "P0D"
+      # Will clean-up all processes
     - name: CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_PROCESS_DATA_CLEANUP_CLEANUP_MODE
       value: "all"
     - name: CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_PROCESS_DATA_CLEANUP_ENABLED
@@ -65,6 +74,7 @@ optimize:
 
 connectors:
   enabled: false
+  contextPath: "/connectors"
 
 identity:
   contextPath: "/identity"
@@ -74,16 +84,18 @@ identityKeycloak:
   auth:
     adminPassword: EasySecret
     managementPassword: EasySecret
-  extraEnvVars:
-    - name: KEYCLOAK_PROXY_ADDRESS_FORWARDING
-      value: "true"
-    - name: KEYCLOAK_FRONTEND_URL
-      value: "https://normunda.de/auth"
+#  extraEnvVars:
+#    - name: KEYCLOAK_PROXY_ADDRESS_FORWARDING
+#      value: "true"
+#    - name: KEYCLOAK_FRONTEND_URL
+#      value: "https://normunda.de/auth"
 
 zeebeGateway:
   env:
-    - name: ZEEBE_GATEWAY_SECURITY_AUTHENTICATION_MODE
-      value: "none"
+    #- name: ZEEBE_GATEWAY_SECURITY_AUTHENTICATION_MODE
+    #  value: "none"
+    - name: CAMUNDA_REST_QUERY_ENABLED
+      value: "true"
   ingress:
     grpc:
       enabled: true
@@ -99,7 +111,13 @@ zeebeGateway:
         nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
         nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
     rest:
-      enabled: false
+      enabled: true
+      path: "/zeebe"
+      host: "normunda.de"
+      tls:
+        enabled: true
+        secretName: "tls-secret"
+  contextPath: "/zeebe"
   replicas: 1
   resources:
     requests:
@@ -110,9 +128,13 @@ zeebeGateway:
       cpu: "1000m"
 
 zeebe:
-  clusterSize: 1
-  partitionCount: 1
-  replicationFactor: 1
+  # Test here
+  annotations:
+    metrics.dynatrace.com/scrape: 'true'
+    metrics.dynatrace.com/path: 'metrics/prometheus'
+  clusterSize: 3
+  partitionCount: 3
+  replicationFactor: 3
   pvcSize: 10Gi
 
   resources:
@@ -123,7 +145,59 @@ zeebe:
       cpu: "512m"
       memory: "2Gi"
 
+webModeler:
+  enabled: true
+  contextPath: "/modeler"
+  image:
+    pullSecrets:
+    # Create the secret as mentioned according to the instructions.
+    - name: registry-camunda-cloud
+  restapi:
+    mail:
+      smtpHost: smtp.example.com
+      smtpPort: 587
+      smtpUser: user
+      smtpPassword: secret
+      # Email address to be displayed as sender of emails from Web Modeler
+      fromAddress: no-reply@example.com
+    env:
+      - name: LOGGING_LEVEL_IO_CAMUNDA_MODELER
+        value: "Trace"
+      - name: CAMUNDA_MODELER_CLUSTERS_0_ID
+        value: "normunda-dev-1"
+      - name: CAMUNDA_MODELER_CLUSTERS_0_NAME
+        value: "normunda-dev"
+      - name: CAMUNDA_MODELER_CLUSTERS_0_VERSION
+        value: "8.6.1"
+      - name: CAMUNDA_MODELER_CLUSTERS_0_AUTHENTICATION
+        value: "OAUTH"
+      - name: CAMUNDA_MODELER_CLUSTERS_0_URL_ZEEBE_GRPC
+        value: "grpc://camunda-zeebe-gateway:26500"
+      - name: CAMUNDA_MODELER_CLUSTERS_0_URL_ZEEBE_REST
+        value: "http://camunda-zeebe-gateway:8080"
+      - name: CAMUNDA_MODELER_CLUSTERS_0_URL_OPERATE
+        value: "http://camunda-operate:80/operate"
+      - name: CAMUNDA_MODELER_CLUSTERS_0_URL_TASKLIST
+        value: "http://camunda-tasklist:80/tasklist"
+      - name: CAMUNDA_MODELER_CLUSTERS_0_OAUTH_URL
+        value: "http://camunda-keycloak:80/auth/realms/camunda-platform/protocol/openid-connect/token"
+      - name: CAMUNDA_MODELER_CLUSTERS_0_OAUTH_AUDIENCE_ZEEBE
+        value: "zeebe-api"
+      - name: CAMUNDA_MODELER_CLUSTERS_0_OAUTH_AUDIENCE_OPERATE
+        value: "operate-api"
+      - name: CAMUNDA_MODELER_CLUSTERS_0_OAUTH_AUDIENCE_TASKLIST
+        value: "tasklist-api"
+postgresql:
+  enabled: true
+
 elasticsearch:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      namespace: default
+      interval: 10s
+      scrapeTimeout: 10s
   master:
     replicaCount: 1
   global:
@@ -164,3 +238,6 @@ elasticsearch:
       value: minioadmin
     - name: S3_ACCESS_KEY
       value: minioadmin
+
+prometheusServiceMonitor:
+  enabled: true

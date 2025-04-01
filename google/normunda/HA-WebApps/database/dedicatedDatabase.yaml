@@ -1,0 +1,36 @@
+# gcloud container node-pools create postgresql-pool \
+#    --cluster=my-cluster \
+#    --num-nodes=1 \
+#    --zone=europe-central2 \
+#    --node-labels=dedicated=postgresql \
+#    --node-taints=dedicated=postgresql:NoSchedule
+
+# helm repo add bitnami https://charts.bitnami.com/bitnami
+# helm repo update
+# helm install my-postgresql bitnami/postgresql --namespace camunda -f dedicatedDatabase.yaml
+
+global:
+  postgresql:
+    auth:
+      postgresPassword: "camunda"
+      username: "camunda"
+      password: "camunda"
+      database: "camunda"
+      existingSecret: my-postgresql-secrets
+
+primary:
+  image:
+    registry: docker.io
+    repository: bitnami/postgresql
+    tag: 15.0.0-debian-10-r0 # Specify PostgreSQL 15 image
+  persistence:
+    enabled: true
+    storageClass: "standard" # Change this to your storage class
+    size: 10Gi
+  nodeSelector:
+    dedicated: postgresql
+  tolerations:
+    - key: "dedicated"
+      operator: "Equal"
+      value: "postgresql"
+      effect: "NoSchedule"

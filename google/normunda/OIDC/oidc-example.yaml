@@ -1,0 +1,248 @@
+global:
+  multitenancy:
+    enabled: false
+  ingress:
+    enabled: true
+    className: nginx
+    host: "normunda.de"
+    tls:
+      enabled: true
+      secretName: "tls-secret"
+    annotations:
+      cert-manager.io/cluster-issuer: "letsencrypt-prod"
+      #ingress.kubernetes.io/rewrite-target: "/"
+      #nginx.ingress.kubernetes.io/ssl-redirect: "false"
+      nginx.ingress.kubernetes.io/proxy-buffering: null
+  elasticsearch:
+    enabled: true
+  identity:
+    auth:
+      issuer: https://login.microsoftonline.com/cbd46654-4f74-4332-a490-69f0f071ba9f/v2.0
+      issuerBackendUrl: https://login.microsoftonline.com/cbd46654-4f74-4332-a490-69f0f071ba9f/v2.0
+      tokenUrl: https://login.microsoftonline.com/cbd46654-4f74-4332-a490-69f0f071ba9f/oauth2/v2.0/token
+      jwksUrl: https://login.microsoftonline.com/cbd46654-4f74-4332-a490-69f0f071ba9f/discovery/v2.0/keys
+      publicIssuerUrl: https://login.microsoftonline.com/cbd46654-4f74-4332-a490-69f0f071ba9f/v2.0
+      type: "MICROSOFT"
+      identity:
+        clientId: 51f87483-f51b-40f3-9fee-a3fb0b878802
+        existingSecret: "mCj8Q~1qVe8Q4nac1PTOB0IIOjrGmQFXoOKHkde0"
+        audience: 51f87483-f51b-40f3-9fee-a3fb0b878802
+        initialClaimValue: "7c8c8609-2bf9-4e8e-ac23-b31749531779"
+        redirectUrl: "https://normunda.de/identity"
+      operate:
+        clientId: 2fd42907-35ce-4803-860b-2f5d3ea9ad05
+        audience: 2fd42907-35ce-4803-860b-2f5d3ea9ad05
+        existingSecret: "sI78Q~Ji9U03NPj9w_zXxD5F3Kg-Ule_sXkNjbq_"
+        redirectUrl: "https://normunda.de/operate"
+      tasklist:
+        clientId: 02d0cece-5bff-4b3f-a35c-1bcb36b49fb5
+        audience: 02d0cece-5bff-4b3f-a35c-1bcb36b49fb5
+        existingSecret: "N.U8Q~3RIuatDhOPYVfGgIh~ivAjJKH7ApIb5aYM"
+        redirectUrl: "https://normunda.de/tasklist"
+      optimize:
+        clientId: f2c06559-c591-44bd-afa5-42ca6a96f433
+        audience: f2c06559-c591-44bd-afa5-42ca6a96f433
+        existingSecret: "0PV8Q~2Mzr_6cNLFb12sScX2_gHsf42nz-Xihc39"
+        redirectUrl: "https://normunda.de/optimize"
+      zeebe:
+        clientId: d63cb3ef-2ced-4e59-95c2-c82b060a640b
+        audience: d63cb3ef-2ced-4e59-95c2-c82b060a640b
+        existingSecret: "dTF8Q~tUMCiNesIAlFllQIBz3_1Y2Kh7CJ-NGaC8"
+        tokenScope: d63cb3ef-2ced-4e59-95c2-c82b060a640b/.default
+      webModeler:
+        clientId: 53398f4b-c439-493d-8454-ccd6b5c9065c
+        clientApiAudience: 53398f4b-c439-493d-8454-ccd6b5c9065c
+        publicApiAudience: 53398f4b-c439-493d-8454-ccd6b5c9065c
+        redirectUrl: "https://normunda.de/modeler"
+      connectors:
+        clientId: 4c58c3fe-0cb5-4610-959f-4ba10642def8
+        audience: 4c58c3fe-0cb5-4610-959f-4ba10642def8
+        clientApiAudience: 4c58c3fe-0cb5-4610-959f-4ba10642def8
+        existingSecret: "C-g8Q~hpBN~sKxBaGeI.Bu9XfIW4tHOImIUuJca-"
+        tokenScope: 4c58c3fe-0cb5-4610-959f-4ba10642def8/.default
+
+zeebe:
+  enabled: true
+  debug: true
+  clusterSize: "1"
+  partitionCount: "1"
+  replicationFactor: "1"
+  pvcSize: 10Gi
+  env:
+    - name: ZEEBE_BROKER_EXECUTION_METRICS_EXPORTER_ENABLED
+      value: "true"
+  cpuThreadCount: "1"
+  ioThreadCount: "1"
+  resources:
+    requests:
+      cpu: 800m
+      memory: 1200Mi
+    limits:
+      cpu: 960m
+      memory: 1920Mi
+  retention:
+    enabled: false
+    minimumAge: 30d
+    policyName: zeebe-record-retention-policy
+
+zeebeGateway:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 400m
+      memory: 450Mi
+    limits:
+      cpu: 400m
+      memory: 450Mi
+  ingress:
+    grpc:
+      enabled: true
+      className: nginx
+      host: "normunda.de"
+      tls:
+        enabled: true
+        secretName: "tls-secret"
+      annotations:
+        cert-manager.io/cluster-issuer: "letsencrypt-prod"
+        ingress.kubernetes.io/rewrite-target: "/"
+        nginx.ingress.kubernetes.io/ssl-redirect: "false"
+        nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
+        nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
+    rest:
+      enabled: true
+      path: "/zeebe"
+      host: "normunda.de"
+      tls:
+        enabled: true
+        secretName: "tls-secret"
+  contextPath: "/zeebe"
+
+operate:
+  enabled: true
+  logging:
+    level:
+      ROOT: INFO
+      io.camunda.operate: INFO
+  resources:
+    requests:
+      cpu: 600m
+      memory: 400Mi
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+  contextPath: "/operate"
+  retention:
+    enabled: false
+
+tasklist:
+  enabled: true
+  contextPath: "/tasklist"
+  resources:
+    requests:
+      cpu: 400m
+      memory: 1Gi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+  retention:
+    enabled: false
+    minimumAge: 30d
+
+
+optimize:
+  enabled: true
+  contextPath: "/optimize"
+  partitionCount: "1"
+  resources:
+    requests:
+      cpu: 600m
+      memory: 1Gi
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+
+identity:
+  enabled: true
+  contextPath: "/identity"
+  fullURL: "https://normunda.de/identity"
+  resources:
+    requests:
+      cpu: 600m
+      memory: 400Mi
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+
+webModeler:
+  enabled: false
+  contextPath: "/modeler"
+  image:
+    pullSecrets:
+      # Create the secret as mentioned according to the instructions.
+      - name: registry-camunda-cloud
+  restapi:
+    mail:
+      smtpHost: smtp.example.com
+      smtpPort: 587
+      smtpUser: user
+      smtpPassword: secret
+      # Email address to be displayed as sender of emails from Web Modeler
+      fromAddress: no-reply@example.com
+    env:
+      - name: LOGGING_LEVEL_IO_CAMUNDA_MODELER
+        value: "Trace"
+      - name: CAMUNDA_MODELER_CLUSTERS_0_ID
+        value: "normunda-dev-1"
+      - name: CAMUNDA_MODELER_CLUSTERS_0_NAME
+        value: "normunda-dev"
+      - name: CAMUNDA_MODELER_CLUSTERS_0_VERSION
+        value: "8.6.1"
+      - name: CAMUNDA_MODELER_CLUSTERS_0_AUTHENTICATION
+        value: "oauth"
+      - name: CAMUNDA_MODELER_CLUSTERS_0_URL_ZEEBE_GRPC
+        value: "grpc://camunda-zeebe-gateway:26500"
+      - name: CAMUNDA_MODELER_CLUSTERS_0_URL_ZEEBE_REST
+        value: "http://camunda-zeebe-gateway:8080"
+      - name: CAMUNDA_MODELER_CLUSTERS_0_URL_OPERATE
+        value: "http://camunda-operate:80/operate"
+      - name: CAMUNDA_MODELER_CLUSTERS_0_URL_TASKLIST
+        value: "http://camunda-tasklist:80/tasklist"
+      - name: CAMUNDA_MODELER_CLUSTERS_0_OAUTH_URL
+        value: "http://camunda-keycloak:80/auth/realms/camunda-platform/protocol/openid-connect/token"
+      - name: CAMUNDA_MODELER_CLUSTERS_0_OAUTH_AUDIENCE_ZEEBE
+        value: "zeebe-api"
+      - name: CAMUNDA_MODELER_CLUSTERS_0_OAUTH_AUDIENCE_OPERATE
+        value: "operate-api"
+      - name: CAMUNDA_MODELER_CLUSTERS_0_OAUTH_AUDIENCE_TASKLIST
+        value: "tasklist-api"
+
+identityPostgresql:
+  enabled: true
+
+identityKeycloak:
+  enabled: false
+
+connectors:
+  enabled: true
+  contextPath: "/connectors"
+
+elasticsearch:
+  enabled: true
+  global:
+  master:
+    replicaCount: 1
+    ## @param elasticsearch.master.masterOnly
+    masterOnly: false
+    heapSize: 1024m
+    persistence:
+      size: 64Gi
+    resources:
+      requests:
+        cpu: 1
+        memory: 2Gi
+      limits:
+        cpu: 2
+        memory: 2Gi
+
+prometheusServiceMonitor:
+  enabled: false

@@ -34,6 +34,10 @@ global:
       zeebe:
         existingSecret:
           name: static-secret
+      webModeler:
+        existingSecret:
+          name: static-secret
+        redirectUrl: "https://normunda.de/modeler"
 
 operate:
   contextPath: "/operate"
@@ -47,10 +51,13 @@ optimize:
   env:
     - name: OPTIMIZE_JAVA_OPTS
       value: "-Xmx2048m"
+      # Runs every 5 minute in example
     - name: CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_CRON_TRIGGER
       value: "*/5 * * * *"
+      # Period of time zero days -> will clean up data immediately
     - name: CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_TTL
-      value: "P0D"
+      value: "P30D"
+      # Will clean-up all processes
     - name: CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_PROCESS_DATA_CLEANUP_CLEANUP_MODE
       value: "all"
     - name: CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_PROCESS_DATA_CLEANUP_ENABLED
@@ -64,7 +71,7 @@ optimize:
 
 
 connectors:
-  enabled: false
+  enabled: true
 
 identity:
   contextPath: "/identity"
@@ -110,9 +117,13 @@ zeebeGateway:
       cpu: "1000m"
 
 zeebe:
-  clusterSize: 1
-  partitionCount: 1
-  replicationFactor: 1
+  # Test here
+  annotations:
+    metrics.dynatrace.com/scrape: 'true'
+    metrics.dynatrace.com/path: 'metrics/prometheus'
+  clusterSize: 3
+  partitionCount: 3
+  replicationFactor: 3
   pvcSize: 10Gi
 
   resources:
@@ -123,7 +134,32 @@ zeebe:
       cpu: "512m"
       memory: "2Gi"
 
+webModeler:
+  enabled: true
+  contextPath: "/modeler"
+  image:
+    pullSecrets:
+    # Create the secret as mentioned according to the instructions.
+    - name: registry-camunda-cloud
+  restapi:
+    mail:
+      smtpHost: smtp.example.com
+      smtpPort: 587
+      smtpUser: user
+      smtpPassword: secret
+      # Email address to be displayed as sender of emails from Web Modeler
+      fromAddress: no-reply@example.com
+postgresql:
+  enabled: true
+
 elasticsearch:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      namespace: default
+      interval: 10s
+      scrapeTimeout: 10s
   master:
     replicaCount: 1
   global:
@@ -164,3 +200,6 @@ elasticsearch:
       value: minioadmin
     - name: S3_ACCESS_KEY
       value: minioadmin
+
+prometheusServiceMonitor:
+  enabled: true

@@ -1,0 +1,174 @@
+apiVersion: apps/v1
+kind: Deployment
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 2
+  revisionHistoryLimit: 10
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: camunda-platform
+        app.kubernetes.io/component: operate
+        app.kubernetes.io/instance: camunda
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: camunda-platform
+        app.kubernetes.io/part-of: camunda-platform
+        app.kubernetes.io/version: 8.6.11
+        helm.sh/chart: camunda-platform-11.2.2
+        webapp: operate-webapp
+    spec:
+      containers:
+        - env:
+            - name: CAMUNDA_LICENSE_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: key
+                  name: camunda-license
+            - name: CAMUNDA_IDENTITY_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  key: operate-secret
+                  name: static-secret
+            - name: ZEEBE_CLIENT_ID
+              value: zeebe
+            - name: ZEEBE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  key: zeebe-secret
+                  name: static-secret
+            - name: ZEEBE_AUTHORIZATION_SERVER_URL
+              value: http://camunda-keycloak:80/auth/realms/camunda-platform/protocol/openid-connect/token
+            - name: ZEEBE_TOKEN_AUDIENCE
+              value: zeebe-api
+            - name: ZEEBE_CLIENT_CONFIG_PATH
+              value: /tmp/zeebe_auth_cache
+            - name: ZEEBE_GATEWAY_CLUSTER_HOST
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.podIP
+            - name: ZEEBE_GATEWAY_CLUSTER_MEMBERID
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.name
+            - name: ZEEBE_GATEWAY_CLUSTER_CLUSTERNAME
+              value: camunda-zeebe
+            - name: ZEEBE_GATEWAY_CLUSTER_PORT
+              value: "26502"
+            - name: ZEEBE_GATEWAY_CLUSTER_INITIALCONTACTPOINTS
+              value: camunda-zeebe:26502
+            - name: CAMUNDA_OPERATE_ELASTICSEARCH_NUMBEROFREPLICAS
+              value: "2"
+            - name: CAMUNDA_OPERATE_ELASTICSEARCH_NUMBEROFSHARDS
+              value: "3"
+          envFrom:
+            - configMapRef:
+                name: camunda-camunda-platform-identity-env-vars
+          image: camunda/operate:8.6.11
+          imagePullPolicy: IfNotPresent
+          name: operate
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+            - containerPort: 9600
+              name: management
+              protocol: TCP
+            - containerPort: 26502
+              name: internal
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 5
+            httpGet:
+              path: /operate/actuator/health/readiness
+              port: management
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            limits:
+              cpu: "2"
+              memory: 2Gi
+            requests:
+              cpu: "2"
+              memory: 2Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /usr/local/operate/config/application.yaml
+              name: config
+              subPath: application.yaml
+            - mountPath: /tmp
+              name: tmp
+            - mountPath: /camunda
+              name: camunda
+      dnsPolicy: ClusterFirst
+      initContainers:
+        - command:
+            - /bin/sh
+            - /usr/local/operate/bin/migrate
+          image: camunda/operate:8.6.11
+          imagePullPolicy: IfNotPresent
+          name: migration
+          resources:
+            limits:
+              cpu: "2"
+              memory: 2Gi
+            requests:
+              cpu: 600m
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /usr/local/operate/config/application.yaml
+              name: config
+              subPath: application.yaml
+            - mountPath: /tmp
+              name: tmp
+            - mountPath: /camunda
+              name: camunda
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        fsGroup: 1001
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccount: camunda-operate
+      serviceAccountName: camunda-operate
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - configMap:
+            defaultMode: 484
+            name: camunda-operate-configuration
+          name: config
+        - emptyDir: {}
+          name: tmp
+        - emptyDir: {}
+          name: camunda
+  selector:
+    matchLabels:
+      webapp: operate-webapp
+metadata:
+  name: operate-webapp

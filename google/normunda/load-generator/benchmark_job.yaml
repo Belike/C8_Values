@@ -1,0 +1,58 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: benchmark-job
+  labels:
+    app: benchmark
+spec:
+  activeDeadlineSeconds: 1200
+  template:
+    metadata:
+      labels:
+        app: benchmark
+    spec:
+      containers:
+        - name: benchmark
+          image: camundacommunityhub/camunda-8-benchmark:main
+          imagePullPolicy: Always
+          env:
+            - name: JAVA_OPTIONS
+              value: >-
+                -Dzeebe.client.cloud.clientId=zeebe
+                -Dzeebe.client.cloud.clientSecret=XjaV2e3w8EbJkHTq
+                -Dzeebe.client.cloud.authUrl=https://normunda.de/auth/realms/camunda-platform/protocol/openid-connect/token
+                -Dzeebe.client.broker.grpcAddress=https://normunda.de
+                -Dzeebe.client.security.plaintext=false
+                -Dzeebe.client.broker.gateway-address=camunda-zeebe-gateway:26500
+                -Dzeebe.client.request-timeout=600s
+                -Dzeebe.client.job.poll-interval=1ms
+                -Dzeebe.client.default-job-worker-stream-enabled=false
+                -Dbenchmark.startPiPerSecond=100
+                -Dbenchmark.startPiIncreaseFactor=0.01
+                -Dbenchmark.startRateAdjustmentStrategy=none
+                -Dbenchmark.fixedBackOffDelay=0
+                -Dbenchmark.maxBackpressurePercentage=1.0
+                -Dbenchmark.taskCompletionDelay=0
+                -Dbenchmark.bpmnProcessId=benchmark
+                -Dbenchmark.payloadPath=file:/config/typical_payload.json
+                -Dbenchmark.autoDeployProcess=true
+                -Dbenchmark.warmupPhaseDurationMillis=60000
+                -Dzeebe.client.worker.max-jobs-active=1000
+                -Dzeebe.client.worker.threads=100
+          resources:
+            limits:
+              cpu: 3
+              memory: 2Gi
+            requests:
+              cpu: 1
+              memory: 1Gi
+          volumeMounts:
+            - name: payload
+              mountPath: /config
+              readOnly: true
+      volumes:
+        - name: payload
+          configMap:
+            name: payload
+      restartPolicy: Never
+  backoffLimit: 4

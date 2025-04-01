@@ -1,0 +1,104 @@
+# Chart values for the Camunda Platform 8 Helm chart.
+# This file deliberately contains only the values that differ from the defaults.
+# For changes and documentation, use your favorite diff tool to compare it with:
+# https://github.com/camunda/camunda-platform-helm/blob/main/charts/camunda-platform/values.yaml
+# See options: https://github.com/camunda/camunda-platform-helm/blob/main/charts/camunda-platform/README.md
+
+global:
+  identity:
+    auth:
+      publicIssuerUrl: "http://keycloak.normunda.de/auth/realms/camunda-platform"
+      operate:
+        existingSecret:
+          name: static-secret
+        redirectUrl: "http://operate.normunda.de"
+      tasklist:
+        existingSecret:
+          name: static-secret
+        redirectUrl: "http://tasklist.normunda.de"
+      optimize:
+        existingSecret:
+          name: static-secret
+        redirectUrl: "http://optimize.normunda.de"
+      zeebe:
+        existingSecret:
+          name: static-secret
+
+identity:
+  ingress:
+    enabled: true
+    className: nginx
+    host: "identity.normunda.de"
+  fullURL: "http://identity.normunda.de"
+
+identityKeycloak:
+  auth:
+    adminPassword: EasySecret
+    managementPassword: EasySecret
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hostname: "keycloak.normunda.de"
+  env:
+    - name: KC_HOSTNAME
+      value: "http://keycloak.normunda.de"
+    - name: KEYCLOAK_HOSTNAME
+      value: "http://keycloak.normunda.de"
+  extraEnvVars:
+    - name: KEYCLOAK_PROXY_ADDRESS_FORWARDING
+      value: "true"
+    - name: KEYCLOAK_FRONTEND_URL
+      value: "http://keycloak.normunda.de/auth/"
+
+operate:
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    host: "operate.normunda.de"
+
+tasklist:
+  enabled: false
+
+optimize:
+  enabled: false
+
+connectors:
+  enabled: false
+
+zeebeGateway:
+  env:
+    - name: ZEEBE_GATEWAY_SECURITY_AUTHENTICATION_MODE
+      value: "none"
+  ingress:
+    grpc:
+      enabled: true
+      className: nginx
+      host: "zeebe.normunda.de"
+    rest:
+      enabled: false
+  replicas: 1
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "2048Mi"
+      cpu: "1000m"
+
+zeebe:
+  clusterSize: 1
+  partitionCount: 1
+  replicationFactor: 1
+  pvcSize: 10Gi
+
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "512M"
+    limits:
+      cpu: "512m"
+      memory: "2Gi"
+
+elasticsearch:
+  master:
+    replicaCount: 1
