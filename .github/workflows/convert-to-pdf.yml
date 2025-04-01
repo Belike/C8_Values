@@ -1,4 +1,4 @@
-name: Convert Markdown to PDF
+name: Convert Markdown to PDF and Push Changes
 
 on:
   push:
@@ -6,25 +6,33 @@ on:
       - main  # or the branch you are using
 
 jobs:
-  convert:
+  convert_and_push:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
+      # Step 2: Install Pandoc and LaTeX (required for converting Markdown to PDF)
       - name: Install Pandoc and LaTeX
         run: |
           sudo apt-get update
           sudo apt-get install -y pandoc
           sudo apt-get install -y texlive-latex-base texlive-latex-extra
 
+      # Step 3: Convert Markdown to PDF
       - name: Convert Markdown to PDF
-        run: pandoc google/normunda/HA-WebApps/README.md -o google/normunda/HA-WebApps/pdf/instructions.pdf
+        run: |
+          pandoc google/normunda/HA-WebApps/README.md -o google/normunda/HA-WebApps/pdf/instructions.pdf
 
-      - name: Commit PDF file
+      # Step 4: Commit the PDF file and push to GitHub
+      - name: Commit and Push PDF file
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
           git add google/normunda/HA-WebApps/pdf/instructions.pdf
-          git commit -m 'Automatically converted markdown to PDF'
-          git push
+          git commit -m 'Automatically converted Markdown to PDF'
+          git push https://$TOKEN@github.com/YourUsername/YourRepository.git HEAD:main
+        env:
+          TOKEN: ${{ secrets.TOKEN }}  # GitHub Token secret for authentication
