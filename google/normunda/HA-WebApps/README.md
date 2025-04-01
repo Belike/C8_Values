@@ -52,7 +52,7 @@ Keycloak can be scaled out-of-the-box and within the helm chart:
         replicaCount: 3
     
 ### Identity
-![Test](img/identity.png)
+![Test](https://github.com/Belike/C8_Values/blob/main/google/normunda/HA-WebApps/img/identity.png)
 
 Identity can only be scaled after the Realm creation of Keycloak has been successfully completed.
 Thus, it has to be guaranteed that Keycloak is up and running.
@@ -97,7 +97,7 @@ identity:
 ```
 
 ### Operate
-![Operate & Tasklist](img/operate-tasklist.png)
+![Operate & Tasklist](https://github.com/Belike/C8_Values/blob/main/google/normunda/HA-WebApps/img/operate-tasklist.png)
 Operate has limited scalability support, because the importer and archiver of Operate cannot be scaled independently.
 Hint: Importers can be scaled per partition, but with only one importer per partition maximum.
 
@@ -188,7 +188,7 @@ yq eval '.spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIg
 .spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].topologyKey = "kubernetes.io/hostname"' -i tasklist_template.yaml
 ```
 ### Optimize
-![Optimize](img/optimize.png)
+![Optimize](https://github.com/Belike/C8_Values/blob/main/google/normunda/HA-WebApps/img/optimize.png)
 Similar to Operate and Tasklist, Optimize cannot be scaled on the importer level.
 
 1. Retrieve ConfigMap of Optimize
