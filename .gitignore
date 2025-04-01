@@ -5,6 +5,9 @@ aws/OpenSearch/Terraform-Setup/.terraform/*
 
 google/normunda/HA-WebApps/pdf/instructions.pdf
 
+google/normunda/docker-registry.yaml
+google/normunda/.dockerconfig.json
+
 
 # OSX leaves these everywhere on SMB shares
 ._*
