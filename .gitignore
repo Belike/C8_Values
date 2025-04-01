@@ -3,6 +3,8 @@ google/normunda/customerConfigurations/**
 aws/OpenSearch/Terraform-Setup/.terraform/**
 aws/OpenSearch/Terraform-Setup/.terraform/*
 
+google/normunda/HA-WebApps/pdf/instructions.pdf
+
 
 # OSX leaves these everywhere on SMB shares
 ._*
