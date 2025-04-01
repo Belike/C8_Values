@@ -107,169 +107,176 @@ Here is one way of scaling Operate:
 
 1. Retrieve the deployment description:
 
-
-    kubectl get deployment $release-operate -n $namespace -o yaml > operate_template.yaml
-
+```
+kubectl get deployment $release-operate -n $namespace -o yaml > operate_template.yaml
+```
 
 2. Clean-Up deployment:
 
-
-	yq eval 'del(.status, .metadata, .spec.template.metadata.annotations, .spec.template.metadata.creationTimestamp,  .spec.selector)' -i operate_template.yaml
-
+```
+yq eval 'del(.status, .metadata, .spec.template.metadata.annotations, .spec.template.metadata.creationTimestamp,  .spec.selector)' -i operate_template.yaml
+```
 3. Scale Replicas of WebApp
 
-
-    yq eval '.metadata.name = "operate-webapp" |
-    .spec.selector.matchLabels.webapp = "operate-webapp" |
-    .spec.template.metadata.labels.webapp = "operate-webapp" |
-    .spec.replicas = env(replicas)' -i operate_template.yaml
-
+```
+yq eval '.metadata.name = "operate-webapp" |
+.spec.selector.matchLabels.webapp = "operate-webapp" |
+.spec.template.metadata.labels.webapp = "operate-webapp" |
+.spec.replicas = env(replicas)' -i operate_template.yaml
+```
 
 4. Disable Archiver and Importer
 
-
-	yq eval '.spec.template.spec.containers[0].env += [{"name": "CAMUNDA_OPERATE_IMPORTERENABLED", "value": "FALSE"}, {"name": "CAMUNDA_OPERATE_ARCHIVERENABLED", "value": "FALSE"}]' operate_template.yaml -i
+```
+yq eval '.spec.template.spec.containers[0].env += [{"name": "CAMUNDA_OPERATE_IMPORTERENABLED", "value": "FALSE"}, {"name": "CAMUNDA_OPERATE_ARCHIVERENABLED", "value": "FALSE"}]' operate_template.yaml -i
+```
 
 5. Apply to Cluster
 
-
-	kubectl apply -f operate_template.yaml -n $namespace
+```
+kubectl apply -f operate_template.yaml -n $namespace
+```
 
 #### Extension:
 If podAntiAffinity should be specified, here is an example to run before applying the configuration:
-
-    yq eval '.spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions[0].key = "app.kubernetes.io/component" |
-    .spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions[0].operator = "In" |
-    .spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions[0].values = ["tasklist"] |
-    .spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].topologyKey = "kubernetes.io/hostname"' -i tasklist_template.yaml
+```
+yq eval '.spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions[0].key = "app.kubernetes.io/component" |
+.spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions[0].operator = "In" |
+.spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions[0].values = ["tasklist"] |
+.spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].topologyKey = "kubernetes.io/hostname"' -i tasklist_template.yaml
+```
 
 ### Tasklist
 Tasklist is following the same principles and procedures as Operate.
 
 1. Retrieve the deployment description:
 
-
-	kubectl get deployment $release-tasklist -n $namespace -o yaml > tasklist_template.yaml
+```
+kubectl get deployment $release-tasklist -n $namespace -o yaml > tasklist_template.yaml
+```
 
 2. Clean-Up deployment:
 
-
-	yq eval 'del(.status, .metadata, .spec.template.metadata.annotations, .spec.template.metadata.creationTimestamp,  .spec.selector)' -i tasklist_template.yaml
+```
+yq eval 'del(.status, .metadata, .spec.template.metadata.annotations, .spec.template.metadata.creationTimestamp,  .spec.selector)' -i tasklist_template.yaml
+```
 
 3. Scale Replicas of WebApp
 
-
-	yq eval '.metadata.name = "tasklist-webapp" | .spec.selector.matchLabels.webapp = "tasklist-webapp" | .spec.template.metadata.labels.webapp = "tasklist-webapp" | .spec.replicas = env(replicas)' -i tasklist_template.yaml
-
+```
+yq eval '.metadata.name = "tasklist-webapp" | .spec.selector.matchLabels.webapp = "tasklist-webapp" | .spec.template.metadata.labels.webapp = "tasklist-webapp" | .spec.replicas = env(replicas)' -i tasklist_template.yaml
+```
 4. Disable Archiver and Importer
 
-
-	yq eval '.spec.template.spec.containers[0].env += [{"name": "CAMUNDA_TASKLIST_IMPORTERENABLED", "value": "FALSE"}, {"name": "CAMUNDA_TASKLIST_ARCHIVERENABLED", "value": "FALSE"}]' tasklist_template.yaml -i
-
+```
+yq eval '.spec.template.spec.containers[0].env += [{"name": "CAMUNDA_TASKLIST_IMPORTERENABLED", "value": "FALSE"}, {"name": "CAMUNDA_TASKLIST_ARCHIVERENABLED", "value": "FALSE"}]' tasklist_template.yaml -i
+```
 5. Apply to Cluster
 
-
-	kubectl apply -f tasklist_template.yaml -n $namespace
-
+```
+kubectl apply -f tasklist_template.yaml -n $namespace
+```
 #### Extension:
 
 If podAntiAffinity should be specified, here is an example to run before applying the configuration:
-
-    yq eval '.spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions[0].key = "app.kubernetes.io/component" |
-    .spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions[0].operator = "In" |
-    .spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions[0].values = ["tasklist"] |
-    .spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].topologyKey = "kubernetes.io/hostname"' -i tasklist_template.yaml
-
+```
+yq eval '.spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions[0].key = "app.kubernetes.io/component" |
+.spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions[0].operator = "In" |
+.spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions[0].values = ["tasklist"] |
+.spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].topologyKey = "kubernetes.io/hostname"' -i tasklist_template.yaml
+```
 ### Optimize
 Similar to Operate and Tasklist, Optimize cannot be scaled on the importer level.
 
 1. Retrieve ConfigMap of Optimize
 
+```
+kubectl get configmap camunda-optimize-configuration -o yaml > camunda-optimize-configuration.yaml
+```
 
-    kubectl get configmap camunda-optimize-configuration -o yaml > camunda-optimize-configuration.yaml
-
-2. Change values of configmap
-
-
-    yq '.metadata.name = "optimize-webapps-config" | (.data."environment-config.yaml" | from_yaml | (.zeebe.enabled = false) | to_yaml) as $updated_env | .data."environment-config.yaml" = $updated_env' camunda-optimize-configuration.yaml > optimize-configuration_template.yaml
-
+3. Change values of configmap
+```
+yq '.metadata.name = "optimize-webapps-config" | (.data."environment-config.yaml" | from_yaml | (.zeebe.enabled = false) | to_yaml) as $updated_env | .data."environment-config.yaml" = $updated_env' camunda-optimize-configuration.yaml > optimize-configuration_template.yaml
+```
 3. Apply ConfigMap
 
-
-    k apply -f optimize-configuration_template.yaml -n $namespace
-
+```
+k apply -f optimize-configuration_template.yaml -n $namespace
+```
 4. Retrieve the deployment description:
 
-
-	kubectl get deployment $release-optimize -n $namespace -o yaml > optimize_template.yaml
+```
+kubectl get deployment $release-optimize -n $namespace -o yaml > optimize_template.yaml
+```
 
 5. Clean-Up deployment:
 
-
-	yq eval 'del(.status, .metadata, .spec.template.metadata.annotations, .spec.template.metadata.creationTimestamp,  .spec.selector)' -i optimize_template.yaml
-
+```
+yq eval 'del(.status, .metadata, .spec.template.metadata.annotations, .spec.template.metadata.creationTimestamp,  .spec.selector)' -i optimize_template.yaml
+```
 6. Scale Replicas of WebApp
 
-
-	yq eval '.metadata.name = "optimize-webapp" | .spec.selector.matchLabels.webapp = "optimize-webapp" | .spec.template.metadata.labels.webapp = "optimize-webapp" | .spec.replicas = env(replicas)' -i optimize_template.yaml
-
+```
+yq eval '.metadata.name = "optimize-webapp" | .spec.selector.matchLabels.webapp = "optimize-webapp" | .spec.template.metadata.labels.webapp = "optimize-webapp" | .spec.replicas = env(replicas)' -i optimize_template.yaml
+```
 7. Disable Importer
 
+```
+yq eval '
+(.spec.template.spec.volumes[] | select(.configMap.name == "camunda-optimize-configuration").configMap.name) = "optimize-webapps-config"
+' -i optimize_template.yaml
 
-    yq eval '
-    (.spec.template.spec.volumes[] | select(.configMap.name == "camunda-optimize-configuration").configMap.name) = "optimize-webapps-config"
-    ' -i optimize_template.yaml
-
-	yq eval 'del(.spec.template.spec.containers[0].env[] | select(.name == "CAMUNDA_OPTIMIZE_ZEEBE_ENABLED"))' -i optimize_template.yaml
-	yq eval '.spec.template.spec.containers[0].env += [{"name": "CAMUNDA_OPTIMIZE_ZEEBE_ENABLED", "value": "false"}]' -i optimize_template.yaml
-
+yq eval 'del(.spec.template.spec.containers[0].env[] | select(.name == "CAMUNDA_OPTIMIZE_ZEEBE_ENABLED"))' -i optimize_template.yaml
+yq eval '.spec.template.spec.containers[0].env += [{"name": "CAMUNDA_OPTIMIZE_ZEEBE_ENABLED", "value": "false"}]' -i optimize_template.yaml
+```
 8. Disable InitContainers
 
-
-    yq eval 'del(.spec.template.spec.initContainers)' -i optimize_template.yaml
-
+```
+yq eval 'del(.spec.template.spec.initContainers)' -i optimize_template.yaml
+```
 9. Disable History Clean-Up
 
+```
+yq eval 'del(.spec.template.spec.containers[0].env[] | select(.name == "CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_PROCESS_DATA_CLEANUP_ENABLED"))' -i optimize_template.yaml
+yq eval 'del(.spec.template.spec.containers[0].env[] | select(.name == "CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_DECISION_DATA_CLEANUP_ENABLED"))' -i optimize_template.yaml
+yq eval 'del(.spec.template.spec.containers[0].env[] | select(.name == "CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_INGESTED_EVENT_CLEANUP_ENABLED"))' -i optimize_template.yaml
 
-    yq eval 'del(.spec.template.spec.containers[0].env[] | select(.name == "CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_PROCESS_DATA_CLEANUP_ENABLED"))' -i optimize_template.yaml
-    yq eval 'del(.spec.template.spec.containers[0].env[] | select(.name == "CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_DECISION_DATA_CLEANUP_ENABLED"))' -i optimize_template.yaml
-    yq eval 'del(.spec.template.spec.containers[0].env[] | select(.name == "CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_INGESTED_EVENT_CLEANUP_ENABLED"))' -i optimize_template.yaml
-
-    yq eval '.spec.template.spec.containers[0].env += [{"name": "CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_PROCESS_DATA_CLEANUP_ENABLED", "value": "false"}, {"name": "CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_DECISION_DATA_CLEANUP_ENABLED", "value": "false"}, {"name": "CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_INGESTED_EVENT_CLEANUP_ENABLED", "value": "false"}]' -i optimize_template.yaml
-
+yq eval '.spec.template.spec.containers[0].env += [{"name": "CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_PROCESS_DATA_CLEANUP_ENABLED", "value": "false"}, {"name": "CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_DECISION_DATA_CLEANUP_ENABLED", "value": "false"}, {"name": "CAMUNDA_OPTIMIZE_HISTORY_CLEANUP_INGESTED_EVENT_CLEANUP_ENABLED", "value": "false"}]' -i optimize_template.yaml
+```
 10. Apply to Cluster
 
-
-	kubectl apply -f optimize_template.yaml -n $namespace
-
+```
+kubectl apply -f optimize_template.yaml -n $namespace
+```
 #### Extension:
 If podAntiAffinity should be specified, here is an example to run before applying the configuration:
-
-    yq eval '.spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions[0].key = "app.kubernetes.io/component" |
-    .spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions[0].operator = "In" |
-    .spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions[0].values = ["optimize"] |
-    .spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].topologyKey = "kubernetes.io/hostname"' -i optimize_template.yaml
-
+```
+yq eval '.spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions[0].key = "app.kubernetes.io/component" |
+.spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions[0].operator = "In" |
+.spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions[0].values = ["optimize"] |
+.spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].topologyKey = "kubernetes.io/hostname"' -i optimize_template.yaml
+```
 ## Web Modeler
 In theory: Web-Modeler WebApps and REST API are scalable.
-
-    kubectl scale deployment camunda-web-modeler-restapi --replicas=$replicas
-    kubectl scale deployment camunda-web-modeler-webapp --replicas=$replicas
-
+```
+kubectl scale deployment camunda-web-modeler-restapi --replicas=$replicas
+kubectl scale deployment camunda-web-modeler-webapp --replicas=$replicas
+```
 Web Modeler websockets cannot be scaled as of now
 ## Clean-Up
 
 Delete regular helm deployment of camunda by running:
-
-    helm uninstall $release -n $(camunda)
-
+```
+helm uninstall $release -n $(camunda)
+```
 Optionally also delete PVCs: 
-
-    k delete pvc --all -n $(camunda)
-
+```
+k delete pvc --all -n $(camunda)
+```
 Delete newly created deployments:
-
-    k delete deployments optimize-webapp
-    k delete deployments operate-webapp
-    k delete deployments tasklist-webapp
-    k delete configmap optimize-webapps-config
+```
+k delete deployments optimize-webapp
+k delete deployments operate-webapp
+k delete deployments tasklist-webapp
+k delete configmap optimize-webapps-config
+```
