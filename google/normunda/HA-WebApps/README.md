@@ -52,6 +52,8 @@ Keycloak can be scaled out-of-the-box and within the helm chart:
         replicaCount: 3
     
 ### Identity
+![Test](img/identity.png)
+
 Identity can only be scaled after the Realm creation of Keycloak has been successfully completed.
 Thus, it has to be guaranteed that Keycloak is up and running.
 
