@@ -33,6 +33,6 @@ jobs:
           git config --global user.email 'github-actions@github.com'
           git add google/normunda/HA-WebApps/pdf/instructions.pdf
           git commit -m 'Automatically converted Markdown to PDF'
-          git push https://$TOKEN@github.com/YourUsername/YourRepository.git HEAD:main
+          git push https://$TOKEN@github.com/Belike/C8_Values.git HEAD:main
         env:
           TOKEN: ${{ secrets.TOKEN }}  # GitHub Token secret for authentication
