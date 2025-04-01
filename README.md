@@ -1,2 +1,5 @@
 # C8_Values
-Private Repo maintaining C8 Versions with values.yaml
+This is my private playground for Camunda 8 Self-Managed deployments.
+Projects will not be maintained and updated infrequently.
+
+Treat projects as samples!
